@@ -21,23 +21,30 @@ class AiSimpleClient:
     def __init__(self):
 
         os.environ["OPENAI_API_KEY"] = open_ai_token
-        model = ChatOpenAI(model="gpt-3.5-turbo")
+        self.model = ChatOpenAI(model="gpt-3.5-turbo")
 
-        self.store = {}
-        tools = [CustomCalculatorTool()]
+        self.tools = [CustomCalculatorTool()]
 
-        prompt = hub.pull("hwchase17/openai-functions-agent")
-        prompt.messages[0].prompt.template = "Тебя зовут Штурман. И ты дружелюбный ассистент. Помоги клиенту с его вопросами."
-
-        agent = create_tool_calling_agent(model, tools, prompt)
-        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+        self.prompt = hub.pull("hwchase17/openai-functions-agent")
+        self.init_agent()
         
-        self.agent_with_chat_history = RunnableWithMessageHistory(
-                                                            agent_executor,
-                                                            self.get_session_history,
-                                                            input_messages_key="input",
-                                                            history_messages_key="chat_history",
-                                                        )
+
+    def init_agent_from_promt(self, promt):
+
+        self.prompt.messages[0].prompt.template = promt
+        self.init_agent()
+
+
+    def init_agent(self):
+
+        
+        self.store = {}
+        agent = create_tool_calling_agent(self.model, self.tools, self.prompt)
+        agent_executor = AgentExecutor(agent=agent, tools=self.tools, verbose=True)
+        
+        self.agent_with_chat_history = RunnableWithMessageHistory(agent_executor, self.get_session_history,
+                                                                  input_messages_key="input", history_messages_key="chat_history")
+                                    
 
     def get_session_history(self, session_id: str) -> ChatMessageHistory:
 
@@ -45,11 +52,13 @@ class AiSimpleClient:
             self.store[session_id] = ChatMessageHistory()
         return self.store[session_id]
     
+    
     def get_config(self, id):
 
         return {"configurable": {"session_id": id}}
+    
 
-    async def reply(self, question: str, id) -> any: 
+    def reply(self, question: str, id) -> any: 
 
         config = self.get_config(id)
         
