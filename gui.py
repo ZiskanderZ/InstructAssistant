@@ -44,7 +44,7 @@ class GradioGUI:
         self.demo = gr.Blocks(css=self.css, theme=self.theme)
         with self.demo:
 
-            gr.Markdown('<h1 style="font-size:36px;">Time Series Classification Transformer</h1>')
+            gr.Markdown('<h1 style="font-size:36px;">Instruct Assistant</h1>')
             self.promt_box = gr.Textbox(label='Enter assistant settings')
             self.create_bot_bttn = gr.Button('Create assistant')
 
